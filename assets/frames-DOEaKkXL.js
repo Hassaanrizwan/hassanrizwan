@@ -1,0 +1,1 @@
+import{t as e}from"./routes-CMgKNVoU.js";export{e as FRAME_URLS};
