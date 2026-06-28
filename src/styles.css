@@ -1,0 +1,224 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@keyframes scanLine {
+  0% { top: -2px; }
+  100% { top: 100%; }
+}
+
+@keyframes logoPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245,166,35,0.4), 0 0 0 0 rgba(245,166,35,0.15); }
+  50% { box-shadow: 0 0 0 12px rgba(245,166,35,0.15), 0 0 0 24px rgba(245,166,35,0.05); }
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-display: "Syne", "Inter", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
+:root {
+  --radius: 0.5rem;
+  --background: #000000;
+  --foreground: #ffffff;
+  --surface: #0a0a0a;
+  --surface-2: #111111;
+  --card: #0a0a0a;
+  --card-foreground: #ffffff;
+  --primary: #f5a623;
+  --primary-foreground: #000000;
+  --gold: #f5a623;
+  --gold-soft: rgba(245, 166, 35, 0.2);
+  --muted: #111111;
+  --muted-foreground: #a0a0a0;
+  --border: rgba(245, 166, 35, 0.2);
+  --input: rgba(245, 166, 35, 0.3);
+  --ring: #f5a623;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    background-color: #000;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: var(--gold);
+    color: #000;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #000;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(245, 166, 35, 0.4);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--gold);
+  }
+}
+
+@utility font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+@utility text-gold {
+  color: var(--gold);
+}
+
+@utility bg-gold {
+  background-color: var(--gold);
+}
+
+@utility border-gold {
+  border-color: var(--gold);
+}
+
+@utility border-gold-soft {
+  border-color: var(--gold-soft);
+}
+
+@utility gold-glow {
+  box-shadow: 0 0 24px rgba(245, 166, 35, 0.35), 0 0 1px rgba(245, 166, 35, 0.6);
+}
+
+@utility gold-glow-lg {
+  box-shadow: 0 0 60px rgba(245, 166, 35, 0.35), 0 0 2px rgba(245, 166, 35, 0.6);
+}
+
+@utility nav-link {
+  position: relative;
+  color: #fff;
+  transition: color 0.25s ease;
+}
+
+@utility nav-link-underline {
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+    height: 2px;
+    width: 100%;
+    background: var(--gold);
+    transform-origin: left;
+    transform: scaleX(0);
+    transition: transform 0.35s ease;
+  }
+  &:hover::after,
+  &[data-active="true"]::after {
+    transform: scaleX(1);
+  }
+  &:hover,
+  &[data-active="true"] {
+    color: var(--gold);
+  }
+}
+
+@utility section-pad {
+  padding-top: 6rem;
+  padding-bottom: 6rem;
+  @media (min-width: 768px) {
+    padding-top: 8rem;
+    padding-bottom: 8rem;
+  }
+}
+
+@utility heading-underline {
+  position: relative;
+  display: inline-block;
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -12px;
+    height: 3px;
+    width: 56px;
+    background: var(--gold);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes bounce-soft {
+  0%, 100% { transform: translateY(0); opacity: 0.7; }
+  50% { transform: translateY(8px); opacity: 1; }
+}
+@keyframes progress-shine {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+
+@utility animate-fade-up {
+  animation: fade-up 0.8s ease forwards;
+}
+@utility animate-fade-in {
+  animation: fade-in 0.6s ease forwards;
+}
+@utility animate-bounce-soft {
+  animation: bounce-soft 1.6s ease-in-out infinite;
+}
+
+/* Reveal-on-scroll */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
