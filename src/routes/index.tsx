@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { LoadingScreen } from "@/components/portfolio/LoadingScreen";
 import { Navbar } from "@/components/portfolio/Navbar";
 import { Hero } from "@/components/portfolio/Hero";
+import { HeroMobile } from "@/components/portfolio/HeroMobile";
 import { About } from "@/components/portfolio/About";
 import { Skills } from "@/components/portfolio/Skills";
 import { Projects } from "@/components/portfolio/Projects";
@@ -33,17 +34,34 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const [images, setImages] = useState<HTMLImageElement[] | null>(null);
-  const onReady = useCallback((imgs: HTMLImageElement[]) => setImages(imgs), []);
+  const [desktopImages, setDesktopImages] = useState<HTMLImageElement[] | null>(null);
+  const [mobileImages, setMobileImages] = useState<HTMLImageElement[] | null>(null);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+
+  const onDesktopReady = useCallback((imgs: HTMLImageElement[]) => setDesktopImages(imgs), []);
+  const onMobileReady = useCallback((imgs: HTMLImageElement[]) => setMobileImages(imgs), []);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   useReveal();
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <LoadingScreen onReady={onReady} />
+      <LoadingScreen
+        onDesktopReady={onDesktopReady}
+        onMobileReady={onMobileReady}
+      />
       <Navbar />
       <main>
-        <Hero images={images} />
+        {isMobile ? (
+          <HeroMobile images={mobileImages} />
+        ) : (
+          <Hero images={desktopImages} />
+        )}
         <About />
         <Skills />
         <Projects />

@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import portrait from "./hassan.png";
 
 interface LoaderProps {
-  onReady: (images: HTMLImageElement[]) => void;
+  onDesktopReady: (images: HTMLImageElement[]) => void;
+  onMobileReady: (images: HTMLImageElement[]) => void;
 }
 
 const STATUSES = ["Preparing experience", "Loading assets", "Calibrating systems", "Almost ready"];
 const NAME = "Hassan Rizwan";
 
-export function LoadingScreen({ onReady }: LoaderProps) {
+export function LoadingScreen({ onDesktopReady, onMobileReady }: LoaderProps) {
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -86,45 +87,86 @@ export function LoadingScreen({ onReady }: LoaderProps) {
     return () => clearTimeout(timeout);
   }, []);
 
-  // Frame preloading — same logic as before
+  // Preload both desktop + mobile frames
   useEffect(() => {
-    // Dynamically import FRAME_URLS to avoid circular deps
-    import("@/lib/frames").then(({ FRAME_URLS }) => {
-      let loaded = 0;
-      const total = FRAME_URLS.length;
-      const images: HTMLImageElement[] = new Array(total);
-      let cancelled = false;
+    let cancelled = false;
+    let desktopLoaded = 0;
+    let mobileLoaded = 0;
+    let desktopTotal = 0;
+    let mobileTotal = 0;
 
-      if (total === 0) {
+    const checkDone = (
+      desktopImgs: HTMLImageElement[],
+      mobileImgs: HTMLImageElement[]
+    ) => {
+      const total = desktopTotal + mobileTotal;
+      if (total === 0) return;
+      const loaded = desktopLoaded + mobileLoaded;
+      setProgress(Math.round((loaded / total) * 100));
+
+      if (loaded === total) {
+        setDone(true);
+        onDesktopReady(desktopImgs);
+        onMobileReady(mobileImgs);
+        setTimeout(() => setHidden(true), 700);
+      }
+    };
+
+    Promise.all([
+      import("@/lib/frames"),
+      import("@/lib/frames-mobile"),
+    ]).then(([{ FRAME_URLS }, { FRAME_URLS_MOBILE }]) => {
+      if (cancelled) return;
+
+      desktopTotal = FRAME_URLS.length;
+      mobileTotal = FRAME_URLS_MOBILE.length;
+
+      const desktopImgs: HTMLImageElement[] = new Array(desktopTotal);
+      const mobileImgs: HTMLImageElement[] = new Array(mobileTotal);
+
+      // Handle case where both are empty
+      if (desktopTotal === 0 && mobileTotal === 0) {
         setProgress(100);
         setDone(true);
-        onReady([]);
+        onDesktopReady([]);
+        onMobileReady([]);
         setTimeout(() => setHidden(true), 700);
         return;
       }
 
+      // Load desktop frames
       FRAME_URLS.forEach((url, i) => {
         const img = new Image();
         img.decoding = "async";
         img.src = url;
         const bump = () => {
           if (cancelled) return;
-          loaded += 1;
-          images[i] = img;
-          setProgress(Math.round((loaded / total) * 100));
-          if (loaded === total) {
-            setDone(true);
-            onReady(images);
-            setTimeout(() => setHidden(true), 700);
-          }
+          desktopLoaded += 1;
+          desktopImgs[i] = img;
+          checkDone(desktopImgs, mobileImgs);
         };
         img.onload = bump;
         img.onerror = bump;
       });
 
-      return () => { cancelled = true; };
+      // Load mobile frames
+      FRAME_URLS_MOBILE.forEach((url, i) => {
+        const img = new Image();
+        img.decoding = "async";
+        img.src = url;
+        const bump = () => {
+          if (cancelled) return;
+          mobileLoaded += 1;
+          mobileImgs[i] = img;
+          checkDone(desktopImgs, mobileImgs);
+        };
+        img.onload = bump;
+        img.onerror = bump;
+      });
     });
-  }, [onReady]);
+
+    return () => { cancelled = true; };
+  }, [onDesktopReady, onMobileReady]);
 
   if (hidden) return null;
 
@@ -171,7 +213,7 @@ export function LoadingScreen({ onReady }: LoaderProps) {
 
       {/* Center content */}
       <div className="relative z-10 flex flex-col items-center">
-        {/* HR Logo */}
+        {/* Portrait */}
         <div
           className="w-[150px] h-[200px] rounded-[18px] overflow-hidden"
           style={{ animation: "logoPulse 2s ease-in-out infinite", boxShadow: "0 0 0 2px #f5a623" }}
