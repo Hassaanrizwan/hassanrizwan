@@ -24,7 +24,6 @@ const ITEMS = [
   },
 ];
 
-// ── Counter that animates from 0 to target when in view ──────────────────────
 function useCountUp(target: string, active: boolean) {
   const [display, setDisplay] = useState("0");
   useEffect(() => {
@@ -44,7 +43,6 @@ function useCountUp(target: string, active: boolean) {
   return display;
 }
 
-// ── Magnetic card component ───────────────────────────────────────────────────
 function StatCard({
   item,
   index,
@@ -73,7 +71,6 @@ function StatCard({
     return () => obs.disconnect();
   }, []);
 
-  // Per-card glow tracks mouse relative to card
   useEffect(() => {
     const card = cardRef.current;
     const glow = glowRef.current;
@@ -91,7 +88,6 @@ function StatCard({
         glow.style.left = cx + "px";
         glow.style.top = cy + "px";
 
-        // Subtle 3-D tilt
         const rx = ((cy - rect.height / 2) / rect.height) * -8;
         const ry = ((cx - rect.width / 2) / rect.width) * 8;
         card.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) scale(1.02)`;
@@ -136,7 +132,6 @@ function StatCard({
         (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(245,166,35,0.15)";
       }}
     >
-      {/* Per-card radial glow */}
       <div
         ref={glowRef}
         style={{
@@ -154,7 +149,6 @@ function StatCard({
         }}
       />
 
-      {/* Sweep border top */}
       <div
         style={{
           position: "absolute",
@@ -168,7 +162,6 @@ function StatCard({
       />
 
       <div style={{ position: "relative", zIndex: 1 }}>
-        {/* Icon */}
         <div
           style={{
             display: "inline-flex",
@@ -184,7 +177,6 @@ function StatCard({
           <Icon size={24} color="#f5a623" />
         </div>
 
-        {/* Animated number */}
         <div
           style={{
             fontFamily: "'Inter', sans-serif",
@@ -199,7 +191,6 @@ function StatCard({
           {count}
         </div>
 
-        {/* Stat label */}
         <h3
           style={{
             fontFamily: "'Inter', sans-serif",
@@ -213,7 +204,6 @@ function StatCard({
           {item.stat}
         </h3>
 
-        {/* Divider */}
         <div
           style={{
             width: "32px",
@@ -223,7 +213,6 @@ function StatCard({
           }}
         />
 
-        {/* Desc */}
         <p
           style={{
             fontFamily: "'Inter', sans-serif",
@@ -239,13 +228,11 @@ function StatCard({
   );
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
 export function Achievements() {
   const sectionRef = useRef<HTMLElement>(null);
   const [sectionVisible, setSectionVisible] = useState(false);
   const mouse = useRef({ x: -999, y: -999 });
 
-  // Custom cursor state
   const cursorDotRef = useRef<HTMLDivElement>(null);
   const cursorRingRef = useRef<HTMLDivElement>(null);
   const cursorTrailRef = useRef<HTMLDivElement[]>([]);
@@ -264,7 +251,6 @@ export function Achievements() {
     );
     obs.observe(section);
 
-    // Track mouse relative to section
     const onMove = (e: MouseEvent) => {
       const rect = section.getBoundingClientRect();
       mouse.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
@@ -285,7 +271,6 @@ export function Achievements() {
     section.addEventListener("mouseenter", onEnter);
     section.addEventListener("mouseleave", onLeave);
 
-    // Init trail positions
     trailPositions.current = Array.from({ length: TRAIL_COUNT }, () => ({
       x: -999,
       y: -999,
@@ -297,13 +282,11 @@ export function Achievements() {
       const mx = mouse.current.x;
       const my = mouse.current.y;
 
-      // Dot: snap
       if (cursorDotRef.current) {
         cursorDotRef.current.style.left = mx + "px";
         cursorDotRef.current.style.top = my + "px";
       }
 
-      // Ring: lerp
       ringPos.current.x = lerp(ringPos.current.x, mx, 0.12);
       ringPos.current.y = lerp(ringPos.current.y, my, 0.12);
       if (cursorRingRef.current) {
@@ -311,7 +294,6 @@ export function Achievements() {
         cursorRingRef.current.style.top = ringPos.current.y + "px";
       }
 
-      // Trail: each follows the previous
       trailPositions.current[0] = {
         x: lerp(trailPositions.current[0]?.x ?? mx, mx, 0.28),
         y: lerp(trailPositions.current[0]?.y ?? my, my, 0.28),
@@ -353,7 +335,6 @@ export function Achievements() {
       className="relative overflow-hidden py-24 md:py-32"
       style={{ background: "#0A0A0A", cursor: "none" }}
     >
-      {/* ── Cursor dot ── */}
       <div
         ref={cursorDotRef}
         style={{
@@ -370,7 +351,6 @@ export function Achievements() {
         }}
       />
 
-      {/* ── Cursor ring ── */}
       <div
         ref={cursorRingRef}
         style={{
@@ -387,7 +367,6 @@ export function Achievements() {
         }}
       />
 
-      {/* ── Trail dots ── */}
       {Array.from({ length: TRAIL_COUNT }).map((_, i) => (
         <div
           key={i}
@@ -406,7 +385,6 @@ export function Achievements() {
         />
       ))}
 
-      {/* Faint BACKGROUND word */}
       <div
         style={{
           position: "absolute",
@@ -435,7 +413,6 @@ export function Achievements() {
 
       <div className="relative mx-auto max-w-6xl px-6" style={{ zIndex: 2 }}>
 
-        {/* Heading */}
         <div
           className="text-center mb-20"
           style={{
@@ -478,7 +455,6 @@ export function Achievements() {
           <div style={{ margin: "20px auto 0", height: "1px", width: "48px", background: "rgba(245,166,35,0.5)" }} />
         </div>
 
-        {/* Stat cards */}
         <div className="grid gap-4 md:grid-cols-3">
           {ITEMS.map((item, i) => (
             <StatCard
@@ -491,7 +467,6 @@ export function Achievements() {
           ))}
         </div>
 
-        {/* Quote block */}
         <div
           style={{
             marginTop: "64px",
@@ -511,7 +486,6 @@ export function Achievements() {
               overflow: "hidden",
             }}
           >
-            {/* Corner accents */}
             {[
               { top: 0, left: 0 },
               { top: 0, right: 0 },
@@ -533,7 +507,6 @@ export function Achievements() {
               />
             ))}
 
-            {/* Open quote mark */}
             <span
               style={{
                 position: "absolute",
@@ -568,7 +541,6 @@ export function Achievements() {
               </span>
             </p>
 
-            {/* Close quote mark */}
             <span
               style={{
                 position: "absolute",

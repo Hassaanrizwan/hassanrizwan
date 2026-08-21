@@ -1,5 +1,5 @@
 import { Bot, Workflow, Brain, Mail, Sheet, Braces, Code2, Database, Zap, Server, MessageSquare, Globe } from "lucide-react";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 
 const AUTOMATION = [
   "CRM Automation (GoHighLevel)",
@@ -78,19 +78,22 @@ const TOOLS = [
   { label: "Next.js",       Icon: Globe },
   { label: "Supabase",      Icon: Database },
   { label: "TypeScript",    Icon: Code2 },
-  { label: "Telegram",      Icon: MessageSquare },
+  { label: "Telegram",      Icon: Mail },
   { label: "Vercel",        Icon: Server },
 ];
 
-// ─── Lightning canvas hook ───────────────────────────────────────────────────
-function useLightning(sectionRef: React.RefObject<HTMLElement | null>) {
+interface Point { x: number; y: number }
+interface Bolt { pts: Point[]; alpha: number; decay: number; width: number }
+
+function useLightning(
+  sectionRef: React.RefObject<HTMLElement | null>,
+  pillRegistry: React.RefObject<Map<string, HTMLSpanElement>>
+) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouse = useRef({ x: -999, y: -999 });
   const bolts = useRef<Bolt[]>([]);
   const raf = useRef<number>(0);
-
-  interface Point { x: number; y: number }
-  interface Bolt { pts: Point[]; alpha: number; decay: number; width: number }
+  const lastStrike = useRef<Map<string, number>>(new Map());
 
   const jitter = (pts: Point[], spread: number): Point[] => {
     if (pts.length >= 10) return pts;
@@ -125,7 +128,6 @@ function useLightning(sectionRef: React.RefObject<HTMLElement | null>) {
       decay: 0.06 + Math.random() * 0.04,
       width: 0.8 + Math.random() * 0.8,
     });
-    // occasional branch
     if (Math.random() > 0.55) {
       const branchPt = pts[Math.floor(pts.length * 0.4)];
       const bAngle = angle + (Math.random() - 0.5) * 1.4;
@@ -173,6 +175,40 @@ function useLightning(sectionRef: React.RefObject<HTMLElement | null>) {
     section.addEventListener("mouseenter", onEnter);
     section.addEventListener("mouseleave", onLeave);
 
+    const strikeRadius = 46;
+    const strikeCooldown = 500;
+
+    const checkPillStrikes = () => {
+      const registry = pillRegistry.current;
+      if (!registry || !section) return;
+      const sectionRect = section.getBoundingClientRect();
+      const now = performance.now();
+
+      for (const bolt of bolts.current) {
+        if (bolt.alpha < bolt.decay * 2) continue;
+        const tip = bolt.pts[bolt.pts.length - 1];
+
+        registry.forEach((el, key) => {
+          const last = lastStrike.current.get(key) || 0;
+          if (now - last < strikeCooldown) return;
+
+          const r = el.getBoundingClientRect();
+          const cx = r.left - sectionRect.left + r.width / 2;
+          const cy = r.top - sectionRect.top + r.height / 2;
+          const dx = tip.x - cx;
+          const dy = tip.y - cy;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < strikeRadius) {
+            lastStrike.current.set(key, now);
+            el.classList.remove("pill-struck");
+            void el.offsetWidth;
+            el.classList.add("pill-struck");
+          }
+        });
+      }
+    };
+
     const draw = () => {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
@@ -186,18 +222,18 @@ function useLightning(sectionRef: React.RefObject<HTMLElement | null>) {
         for (let i = 1; i < bolt.pts.length; i++) {
           ctx.lineTo(bolt.pts[i].x, bolt.pts[i].y);
         }
-        // outer glow pass
         ctx.strokeStyle = `rgba(245,166,35,${bolt.alpha * 0.18})`;
         ctx.lineWidth = bolt.width * 5;
         ctx.lineCap = "round";
         ctx.stroke();
-        // core
         ctx.strokeStyle = `rgba(255,220,100,${bolt.alpha})`;
         ctx.lineWidth = bolt.width;
         ctx.stroke();
 
         bolt.alpha -= bolt.decay;
       }
+
+      checkPillStrikes();
 
       raf.current = requestAnimationFrame(draw);
     };
@@ -216,7 +252,6 @@ function useLightning(sectionRef: React.RefObject<HTMLElement | null>) {
   return canvasRef;
 }
 
-// ─── Existing hooks / components (UNCHANGED) ─────────────────────────────────
 function useInView(threshold = 0.1) {
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
@@ -231,28 +266,45 @@ function useInView(threshold = 0.1) {
   return { ref, inView };
 }
 
+function randomOffset() {
+  const angle = Math.random() * Math.PI * 2;
+  const distance = 180 + Math.random() * 260;
+  return {
+    x: Math.cos(angle) * distance,
+    y: Math.sin(angle) * distance - 60,
+    rotate: (Math.random() - 0.5) * 50,
+  };
+}
+
 function Pill({
   label,
   delay,
-  from,
   inView,
+  pillRegistry,
 }: {
   label: string;
   delay: number;
-  from: "left" | "right";
   inView: boolean;
+  pillRegistry: React.RefObject<Map<string, HTMLSpanElement>>;
 }) {
+  const start = useMemo(randomOffset, []);
+  const setRef = useCallback(
+    (el: HTMLSpanElement | null) => {
+      if (el) pillRegistry.current.set(label, el);
+      else pillRegistry.current.delete(label);
+    },
+    [label, pillRegistry]
+  );
   return (
     <span
-      className="group relative inline-flex cursor-default items-center overflow-hidden px-4 py-2"
+      ref={setRef}
+      className="group relative inline-flex cursor-default items-center overflow-hidden px-4 py-2 pill-strikable"
       style={{
         opacity: inView ? 1 : 0,
         transform: inView
-          ? "translateX(0)"
-          : from === "left"
-          ? "translateX(-80px)"
-          : "translateX(80px)",
-        transition: `opacity 0.6s cubic-bezier(0.22,1,0.36,1) ${delay}ms, transform 0.6s cubic-bezier(0.22,1,0.36,1) ${delay}ms`,
+          ? "translate(0px, 0px) rotate(0deg)"
+          : `translate(${start.x}px, ${start.y}px) rotate(${start.rotate}deg)`,
+        transition: `opacity 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}ms, transform 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}ms`,
         border: "1px solid rgba(245,166,35,0.25)",
         background: "transparent",
       }}
@@ -288,10 +340,12 @@ function SkillColumn({
   title,
   skills,
   from,
+  pillRegistry,
 }: {
   title: string;
   skills: string[];
   from: "left" | "right";
+  pillRegistry: React.RefObject<Map<string, HTMLSpanElement>>;
 }) {
   const { ref, inView } = useInView(0.1);
   return (
@@ -325,7 +379,7 @@ function SkillColumn({
       </div>
       <div className="flex flex-wrap gap-3">
         {skills.map((s, i) => (
-          <Pill key={s} label={s} delay={100 + i * 80} from={from} inView={inView} />
+          <Pill key={s} label={s} delay={40 + i * 45} inView={inView} pillRegistry={pillRegistry} />
         ))}
       </div>
     </div>
@@ -373,13 +427,13 @@ function ToolCard({
   );
 }
 
-// ─── Main section ─────────────────────────────────────────────────────────────
 export function Skills() {
   const { ref: headingRef, inView: headingInView } = useInView(0.3);
   const { ref: toolsRef, inView: toolsInView } = useInView(0.1);
 
   const sectionRef = useRef<HTMLElement>(null);
-  const canvasRef = useLightning(sectionRef);
+  const pillRegistry = useRef<Map<string, HTMLSpanElement>>(new Map());
+  const canvasRef = useLightning(sectionRef, pillRegistry);
 
   return (
     <section
@@ -388,7 +442,6 @@ export function Skills() {
       className="relative overflow-hidden py-24 md:py-32"
       style={{ background: "#0A0A0A" }}
     >
-      {/* Lightning canvas — sits above bg, below content */}
       <canvas
         ref={canvasRef}
         aria-hidden="true"
@@ -400,7 +453,34 @@ export function Skills() {
         }}
       />
 
-      {/* Faint background text */}
+      <style>{`
+        .pill-strikable {
+          transition: opacity 0.7s cubic-bezier(0.22,1,0.36,1),
+                      transform 0.7s cubic-bezier(0.22,1,0.36,1),
+                      border-color 0.15s ease,
+                      box-shadow 0.15s ease;
+        }
+        .pill-struck {
+          animation: pillZap 0.5s ease-out;
+        }
+        @keyframes pillZap {
+          0% {
+            border-color: rgba(255,220,100,1);
+            box-shadow: 0 0 18px 3px rgba(245,166,35,0.7);
+            transform: scale(1.1);
+          }
+          60% {
+            border-color: rgba(255,220,100,0.6);
+            box-shadow: 0 0 10px 2px rgba(245,166,35,0.35);
+          }
+          100% {
+            border-color: rgba(245,166,35,0.25);
+            box-shadow: none;
+            transform: scale(1);
+          }
+        }
+      `}</style>
+
       <div
         className="pointer-events-none absolute inset-0 flex items-center justify-center select-none overflow-hidden"
         style={{ opacity: 0.015, zIndex: 0 }}
@@ -413,10 +493,8 @@ export function Skills() {
         </span>
       </div>
 
-      {/* All content sits above canvas at z-index 2 */}
       <div className="relative mx-auto max-w-7xl px-6" style={{ zIndex: 2 }}>
 
-        {/* Heading — UNCHANGED */}
         <div
           ref={headingRef}
           className="text-center mb-20"
@@ -460,13 +538,11 @@ export function Skills() {
           <div className="mx-auto mt-5 h-px w-12 bg-gold/50" />
         </div>
 
-        {/* Two skill columns — UNCHANGED */}
         <div className="grid gap-16 md:grid-cols-2">
-          <SkillColumn title="Automation & AI" skills={AUTOMATION} from="left" />
-          <SkillColumn title="Development & Tech" skills={DEV} from="right" />
+          <SkillColumn title="Automation & AI" skills={AUTOMATION} from="left" pillRegistry={pillRegistry} />
+          <SkillColumn title="Development & Tech" skills={DEV} from="right" pillRegistry={pillRegistry} />
         </div>
 
-        {/* Tools grid — reduced to 12, layout unchanged */}
         <div ref={toolsRef} className="mt-24">
           <div
             className="text-center mb-10"

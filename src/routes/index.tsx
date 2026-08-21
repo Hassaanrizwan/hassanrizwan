@@ -36,12 +36,13 @@ export const Route = createFileRoute("/")({
 function Index() {
   const [desktopImages, setDesktopImages] = useState<HTMLImageElement[] | null>(null);
   const [mobileImages, setMobileImages] = useState<HTMLImageElement[] | null>(null);
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(false);
 
   const onDesktopReady = useCallback((imgs: HTMLImageElement[]) => setDesktopImages(imgs), []);
   const onMobileReady = useCallback((imgs: HTMLImageElement[]) => setMobileImages(imgs), []);
 
   useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
     const onResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);

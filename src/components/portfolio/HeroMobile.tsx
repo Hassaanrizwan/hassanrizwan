@@ -126,7 +126,6 @@ export function HeroMobile({ images }: HeroMobileProps) {
           style={{ display: "block" }}
         />
 
-        {/* Gradient */}
         <div
           className="pointer-events-none absolute inset-0"
           style={{
@@ -136,7 +135,6 @@ export function HeroMobile({ images }: HeroMobileProps) {
           }}
         />
 
-        {/* Text */}
         <div className="pointer-events-none absolute inset-0 flex items-end">
           <div className="pointer-events-auto w-full px-6 pb-8">
             <div
@@ -146,7 +144,6 @@ export function HeroMobile({ images }: HeroMobileProps) {
                 transform: textPhase ? "translateY(0)" : "translateY(20px)",
               }}
             >
-              {/* Top label */}
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-px w-6 bg-gold" />
                 <span className="text-[10px] uppercase tracking-[0.3em] text-gold">
@@ -154,12 +151,10 @@ export function HeroMobile({ images }: HeroMobileProps) {
                 </span>
               </div>
 
-              {/* Name */}
               <h1 className="font-display text-5xl font-bold leading-tight text-white">
                 Hassan<br />Rizwan
               </h1>
 
-              {/* Roles */}
               <p className="mt-3 text-xl font-semibold text-gold">
                 AI Automation Specialist
               </p>
@@ -167,10 +162,8 @@ export function HeroMobile({ images }: HeroMobileProps) {
                 Full Stack Web Developer
               </p>
 
-              {/* Divider */}
               <div className="mt-4 h-px w-16 bg-gold/60" />
 
-              {/* Stats row */}
               <div className="mt-4 flex gap-6">
                 <div>
                   <div className="text-xl font-bold text-gold">50+</div>
@@ -188,12 +181,10 @@ export function HeroMobile({ images }: HeroMobileProps) {
                 </div>
               </div>
 
-              {/* Description */}
               <p className="mt-4 text-sm leading-relaxed text-white/60">
                 Building AI-powered automation systems that solve real business problems — starting at 18.
               </p>
 
-              {/* Buttons */}
               <div className="mt-6 flex gap-3 pb-2">
                 <button
                   onClick={() => document.getElementById("projects")?.scrollIntoView({ behavior: "smooth" })}
@@ -212,7 +203,6 @@ export function HeroMobile({ images }: HeroMobileProps) {
           </div>
         </div>
 
-        {/* Scroll indicator */}
         <div
           className="pointer-events-none absolute bottom-8 left-1/2 -translate-x-1/2 text-gold"
           style={{ opacity: textPhase ? 0 : 0.9, transition: "opacity 0.4s ease" }}

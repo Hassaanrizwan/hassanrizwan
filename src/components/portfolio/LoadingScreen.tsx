@@ -18,7 +18,6 @@ export function LoadingScreen({ onDesktopReady, onMobileReady }: LoaderProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
 
-  // Particle animation
   useEffect(() => {
     const canvas = canvasRef.current;
     const loader = loaderRef.current;
@@ -70,7 +69,6 @@ export function LoadingScreen({ onDesktopReady, onMobileReady }: LoaderProps) {
     };
   }, []);
 
-  // Name letter reveal
   useEffect(() => {
     const timeout = setTimeout(() => {
       let i = 0;
@@ -87,45 +85,40 @@ export function LoadingScreen({ onDesktopReady, onMobileReady }: LoaderProps) {
     return () => clearTimeout(timeout);
   }, []);
 
-  // Preload both desktop + mobile frames
   useEffect(() => {
     let cancelled = false;
-    let desktopLoaded = 0;
-    let mobileLoaded = 0;
-    let desktopTotal = 0;
-    let mobileTotal = 0;
+    let loaded = 0;
+    let total = 0;
 
-    const checkDone = (
-      desktopImgs: HTMLImageElement[],
-      mobileImgs: HTMLImageElement[]
-    ) => {
-      const total = desktopTotal + mobileTotal;
+    const isMobile = window.innerWidth < 768;
+
+    const checkDone = (imgs: HTMLImageElement[]) => {
       if (total === 0) return;
-      const loaded = desktopLoaded + mobileLoaded;
       setProgress(Math.round((loaded / total) * 100));
 
       if (loaded === total) {
         setDone(true);
-        onDesktopReady(desktopImgs);
-        onMobileReady(mobileImgs);
+        if (isMobile) {
+          onMobileReady(imgs);
+          onDesktopReady([]);
+        } else {
+          onDesktopReady(imgs);
+          onMobileReady([]);
+        }
         setTimeout(() => setHidden(true), 700);
       }
     };
 
-    Promise.all([
-      import("@/lib/frames"),
-      import("@/lib/frames-mobile"),
-    ]).then(([{ FRAME_URLS }, { FRAME_URLS_MOBILE }]) => {
+    const modulePromise = isMobile
+      ? import("@/lib/frames-mobile").then((m) => m.FRAME_URLS_MOBILE)
+      : import("@/lib/frames").then((m) => m.FRAME_URLS);
+
+    modulePromise.then((urls) => {
       if (cancelled) return;
+      total = urls.length;
+      const imgs: HTMLImageElement[] = new Array(total);
 
-      desktopTotal = FRAME_URLS.length;
-      mobileTotal = FRAME_URLS_MOBILE.length;
-
-      const desktopImgs: HTMLImageElement[] = new Array(desktopTotal);
-      const mobileImgs: HTMLImageElement[] = new Array(mobileTotal);
-
-      // Handle case where both are empty
-      if (desktopTotal === 0 && mobileTotal === 0) {
+      if (total === 0) {
         setProgress(100);
         setDone(true);
         onDesktopReady([]);
@@ -134,38 +127,24 @@ export function LoadingScreen({ onDesktopReady, onMobileReady }: LoaderProps) {
         return;
       }
 
-      // Load desktop frames
-      FRAME_URLS.forEach((url, i) => {
+      urls.forEach((url, i) => {
         const img = new Image();
         img.decoding = "async";
         img.src = url;
         const bump = () => {
           if (cancelled) return;
-          desktopLoaded += 1;
-          desktopImgs[i] = img;
-          checkDone(desktopImgs, mobileImgs);
-        };
-        img.onload = bump;
-        img.onerror = bump;
-      });
-
-      // Load mobile frames
-      FRAME_URLS_MOBILE.forEach((url, i) => {
-        const img = new Image();
-        img.decoding = "async";
-        img.src = url;
-        const bump = () => {
-          if (cancelled) return;
-          mobileLoaded += 1;
-          mobileImgs[i] = img;
-          checkDone(desktopImgs, mobileImgs);
+          loaded += 1;
+          imgs[i] = img;
+          checkDone(imgs);
         };
         img.onload = bump;
         img.onerror = bump;
       });
     });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [onDesktopReady, onMobileReady]);
 
   if (hidden) return null;
@@ -178,10 +157,8 @@ export function LoadingScreen({ onDesktopReady, onMobileReady }: LoaderProps) {
       className="fixed inset-0 z-[100] overflow-hidden flex flex-col items-center justify-center bg-black"
       style={{ opacity: done ? 0 : 1, pointerEvents: done ? "none" : "auto", transition: "opacity 0.7s ease" }}
     >
-      {/* Particle canvas */}
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
 
-      {/* Grid overlay */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -190,13 +167,11 @@ export function LoadingScreen({ onDesktopReady, onMobileReady }: LoaderProps) {
         }}
       />
 
-      {/* Structural lines */}
       <div className="absolute pointer-events-none" style={{ top: "20%", left: 0, right: 0, height: "1px", background: "rgba(245,166,35,0.08)" }} />
       <div className="absolute pointer-events-none" style={{ bottom: "20%", left: 0, right: 0, height: "1px", background: "rgba(245,166,35,0.08)" }} />
       <div className="absolute pointer-events-none" style={{ left: "20%", top: 0, bottom: 0, width: "1px", background: "rgba(245,166,35,0.08)" }} />
       <div className="absolute pointer-events-none" style={{ right: "20%", top: 0, bottom: 0, width: "1px", background: "rgba(245,166,35,0.08)" }} />
 
-      {/* Scanning line */}
       <div
         className="absolute left-0 right-0 pointer-events-none"
         style={{
@@ -206,14 +181,11 @@ export function LoadingScreen({ onDesktopReady, onMobileReady }: LoaderProps) {
         }}
       />
 
-      {/* Corner brackets */}
       {[["top-6 left-6 border-t border-l", "tl"], ["top-6 right-6 border-t border-r", "tr"], ["bottom-6 left-6 border-b border-l", "bl"], ["bottom-6 right-6 border-b border-r", "br"]].map(([cls]) => (
         <div key={cls} className={`absolute w-7 h-7 pointer-events-none ${cls}`} style={{ borderColor: "#f5a623", borderWidth: "1.5px" }} />
       ))}
 
-      {/* Center content */}
       <div className="relative z-10 flex flex-col items-center">
-        {/* Portrait */}
         <div
           className="w-[150px] h-[200px] rounded-[18px] overflow-hidden"
           style={{ animation: "logoPulse 2s ease-in-out infinite", boxShadow: "0 0 0 2px #f5a623" }}
@@ -226,7 +198,6 @@ export function LoadingScreen({ onDesktopReady, onMobileReady }: LoaderProps) {
           />
         </div>
 
-        {/* Name reveal */}
         <div className="mt-8 flex overflow-hidden">
           {NAME.split("").map((char, i) => (
             <span
@@ -249,7 +220,6 @@ export function LoadingScreen({ onDesktopReady, onMobileReady }: LoaderProps) {
           ))}
         </div>
 
-        {/* Tagline */}
         <p
           className="mt-2 text-[11px] tracking-[0.35em] uppercase"
           style={{
@@ -261,7 +231,6 @@ export function LoadingScreen({ onDesktopReady, onMobileReady }: LoaderProps) {
           AI Automation · Full Stack Dev
         </p>
 
-        {/* Progress bar */}
         <div className="mt-10 w-[280px]">
           <div className="flex justify-between mb-2">
             <span className="text-[9px] tracking-[0.3em] uppercase" style={{ color: "rgba(255,255,255,0.35)" }}>
@@ -292,7 +261,6 @@ export function LoadingScreen({ onDesktopReady, onMobileReady }: LoaderProps) {
         </div>
       </div>
 
-      {/* Keyframe styles */}
       <style>{`
         @keyframes scanLine { 0% { top: -2px; } 100% { top: 100%; } }
         @keyframes logoPulse {

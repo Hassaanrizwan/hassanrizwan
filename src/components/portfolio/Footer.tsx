@@ -28,7 +28,6 @@ export function Footer() {
   const [visible, setVisible] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  // Scroll reveal
   useEffect(() => {
     const el = footerRef.current;
     if (!el) return;
@@ -40,7 +39,6 @@ export function Footer() {
     return () => obs.disconnect();
   }, []);
 
-  // Show scroll-to-top after scrolling down
   useEffect(() => {
     const onScroll = () => setShowScrollTop(window.scrollY > 600);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -59,7 +57,6 @@ export function Footer() {
         overflow: "hidden",
       }}
     >
-      {/* Ambient glow */}
       <div style={{
         position: "absolute", bottom: 0, left: "50%",
         transform: "translateX(-50%)",
@@ -68,7 +65,6 @@ export function Footer() {
         pointerEvents: "none",
       }} />
 
-      {/* Faint bg text */}
       <div style={{
         position: "absolute", inset: 0, display: "flex",
         alignItems: "center", justifyContent: "center",
@@ -88,7 +84,6 @@ export function Footer() {
         maxWidth: "1200px", margin: "0 auto", padding: "64px 24px 40px",
       }}>
 
-        {/* Top row: name + nav */}
         <div
           className="grid gap-12 md:grid-cols-2 lg:grid-cols-3"
           style={{
@@ -97,7 +92,6 @@ export function Footer() {
             transition: "opacity 0.7s ease, transform 0.7s ease",
           }}
         >
-          {/* Brand */}
           <div style={{ gridColumn: "1 / 2" }}>
             <p style={{
               fontFamily: "'Inter', sans-serif",
@@ -125,7 +119,6 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Nav links */}
           <div>
             <p style={{
               fontFamily: "'Inter', sans-serif",
@@ -148,7 +141,6 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Contact + socials */}
           <div>
             <p style={{
               fontFamily: "'Inter', sans-serif",
@@ -179,7 +171,6 @@ export function Footer() {
               </span>
             </div>
 
-            {/* Social icons */}
             <div style={{ display: "flex", gap: "12px" }}>
               {SOCIALS.map(({ Icon, href, label }, i) => (
                 <SocialIcon key={label} Icon={Icon} href={href} label={label} delay={i * 80 + 400} visible={visible} />
@@ -188,7 +179,6 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Divider */}
         <div
           style={{
             margin: "48px 0 28px",
@@ -208,7 +198,6 @@ export function Footer() {
           }} />
         </div>
 
-        {/* Bottom row */}
         <div
           style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -235,7 +224,6 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Scroll to top button */}
       <button
         onClick={scrollToTop}
         aria-label="Scroll to top"

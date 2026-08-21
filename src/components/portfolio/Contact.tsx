@@ -4,21 +4,10 @@ import { useState, useRef, useEffect } from "react";
 import { Mail, Github, Linkedin, MapPin, Send, CheckCircle, AlertCircle } from "lucide-react";
 import emailjs from "@emailjs/browser";
 
-/*
-  SETUP (one-time):
-  1. npm install @emailjs/browser
-  2. Go to https://emailjs.com → create free account
-  3. Add Email Service (Gmail) → copy Service ID
-  4. Create Email Template with variables: {{from_name}}, {{from_email}}, {{subject}}, {{message}}
-     → copy Template ID
-  5. Account → API Keys → copy Public Key
-  6. Paste all three below (or move to .env.local)
-*/
 const EMAILJS_SERVICE_ID  = "service_652641m";
 const EMAILJS_TEMPLATE_ID = "template_soj2ave";
 const EMAILJS_PUBLIC_KEY  = "nRltt5CvVHoTTnb7X";
 
-// ── Magnetic field line SVG background ───────────────────────────────────────
 function FieldLines() {
   return (
     <svg
@@ -38,7 +27,6 @@ function FieldLines() {
   );
 }
 
-// ── Floating label input ──────────────────────────────────────────────────────
 function FloatingField({
   id, label, type = "text", value, onChange, required = true,
 }: {
@@ -91,7 +79,6 @@ function FloatingField({
           boxSizing: "border-box",
         }}
       />
-      {/* Animated underline fill */}
       <span
         style={{
           position: "absolute",
@@ -171,7 +158,6 @@ function FloatingTextarea({
   );
 }
 
-// ── Contact link row ──────────────────────────────────────────────────────────
 function ContactLink({
   Icon, href, label, delay, visible,
 }: {
@@ -224,7 +210,6 @@ function ContactLink({
   );
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
 export function Contact() {
   const sectionRef = useRef<HTMLElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -232,7 +217,6 @@ export function Contact() {
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
 
-  // Scroll reveal
   useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
@@ -244,7 +228,6 @@ export function Contact() {
     return () => obs.disconnect();
   }, []);
 
-  // Custom cursor
   const cursorRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
   const mousePos = useRef({ x: -999, y: -999 });
@@ -325,7 +308,6 @@ export function Contact() {
     };
   }, []);
 
-  // Send via EmailJS
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (status === "sending") return;
@@ -360,7 +342,6 @@ export function Contact() {
     >
       <FieldLines />
 
-      {/* Cursor dot */}
       <div
         ref={cursorRef}
         style={{
@@ -371,7 +352,6 @@ export function Contact() {
           mixBlendMode: "screen",
         }}
       />
-      {/* Cursor ring */}
       <div
         ref={ringRef}
         style={{
@@ -383,7 +363,6 @@ export function Contact() {
         }}
       />
 
-      {/* Ambient glow top-right */}
       <div
         style={{
           position: "absolute", top: "-120px", right: "-120px",
@@ -395,7 +374,6 @@ export function Contact() {
 
       <div className="relative mx-auto max-w-7xl px-6" style={{ zIndex: 2 }}>
 
-        {/* Heading */}
         <div
           className="text-center mb-20"
           style={{
@@ -428,7 +406,6 @@ export function Contact() {
 
         <div className="grid gap-16 md:grid-cols-2">
 
-          {/* Left: info */}
           <div
             style={{
               opacity: visible ? 1 : 0,
@@ -452,7 +429,6 @@ export function Contact() {
               <ContactLink Icon={MapPin}   label="Pakistan"                                                                                        delay={440} visible={visible} />
             </div>
 
-            {/* Decorative quote */}
             <div
               style={{
                 marginTop: "48px",
@@ -472,7 +448,6 @@ export function Contact() {
             </div>
           </div>
 
-          {/* Right: form */}
           <div
             style={{
               opacity: visible ? 1 : 0,
@@ -492,7 +467,6 @@ export function Contact() {
               <FloatingField   id="subject" label="Subject" value={form.subject} onChange={(v) => setForm((f) => ({ ...f, subject: v }))} required={false} />
               <FloatingTextarea value={form.message} onChange={(v) => setForm((f) => ({ ...f, message: v }))} />
 
-              {/* Status messages */}
               {status === "success" && (
                 <div style={{
                   display: "flex", alignItems: "center", gap: "10px",
@@ -518,7 +492,6 @@ export function Contact() {
                 </div>
               )}
 
-              {/* Submit button */}
               <button
                 type="submit"
                 disabled={status === "sending"}
@@ -538,7 +511,6 @@ export function Contact() {
                 }}
                 className="group"
               >
-                {/* Shimmer sweep on hover */}
                 <span
                   style={{
                     position: "absolute", inset: 0,

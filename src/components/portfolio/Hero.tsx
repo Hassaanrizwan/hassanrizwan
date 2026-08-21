@@ -6,6 +6,8 @@ interface HeroProps {
   images: HTMLImageElement[] | null;
 }
 
+const TEXT_REVEAL_THRESHOLD = 0.6;
+
 export function Hero({ images }: HeroProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -14,7 +16,6 @@ export function Hero({ images }: HeroProps) {
   const isRunningRef = useRef(false);
   const [textPhase, setTextPhase] = useState(0);
 
-  // Resize canvas to match DPR — only when size actually changes
   const resizeCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -52,7 +53,6 @@ export function Hero({ images }: HeroProps) {
     ctx.drawImage(img, dx, dy, dw, dh);
   };
 
-  // Continuous RAF loop — always running, just draws whatever frameRef says
   const startLoop = () => {
     if (isRunningRef.current) return;
     isRunningRef.current = true;
@@ -76,6 +76,7 @@ export function Hero({ images }: HeroProps) {
     startLoop();
 
     let textPhaseTimeout: ReturnType<typeof setTimeout>;
+    const revealFrameIndex = Math.floor(FRAME_URLS.length * TEXT_REVEAL_THRESHOLD);
 
     const onScroll = () => {
       const section = sectionRef.current;
@@ -89,14 +90,12 @@ export function Hero({ images }: HeroProps) {
         Math.floor(progress * (FRAME_URLS.length - 1))
       );
 
-      // Just update the ref — the RAF loop picks it up
       frameRef.current = idx;
 
-      // Debounce the React state update to avoid re-renders on every scroll tick
       clearTimeout(textPhaseTimeout);
       textPhaseTimeout = setTimeout(() => {
-        setTextPhase(idx >= 120 ? 1 : 0);
-      }, 50);
+        setTextPhase(idx >= revealFrameIndex ? 1 : 0);
+      }, 30);
     };
 
     const onResize = () => {
@@ -160,7 +159,10 @@ export function Hero({ images }: HeroProps) {
                 Full Stack Web Developer
               </p>
               <div className="mt-6 h-px w-24 bg-gold/60" />
-              <p className="mt-4 text-sm text-muted-foreground md:text-base">
+              <p
+                className="mt-4 text-sm md:text-base"
+                style={{ color: "rgba(255,255,255,0.75)" }}
+              >
                 8,000+ professionals trust my work — built at 18.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
